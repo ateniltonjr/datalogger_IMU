@@ -319,6 +319,9 @@ void capture_imu_data_and_save()
     const int intervalo_ms = 100;
     int tempo_total_s = (total_amostras * intervalo_ms) / 1000;
     printf("Tempo estimado: %d segundos\n", tempo_total_s);
+    escrever(&ssd, "Capturando dados...", 10, 2, cor);
+    escrever(&ssd, "Pressione A para parar", 10, 3, cor);
+    escrever
     // Gera nome do arquivo com base definida no código
     snprintf(nome_arquivo, sizeof(nome_arquivo), "%s%d.csv", nome_arquivo_base, numero_coleta);
     numero_coleta++;
@@ -600,8 +603,10 @@ int main()
         // Captura de dados solicitada pelo botão A
         if (capture_request_flag) {
             captura_ativa = true;
+            beep_curto(); // Beep curto ao iniciar captura (fora da interrupção)
             capture_imu_data_and_save();
             captura_ativa = false;
+            beep_duplo(); // Dois beeps curtos ao finalizar captura (fora da interrupção)
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Captura OK", 10, 2, cor);
             capture_request_flag = false;
@@ -669,14 +674,14 @@ int main()
         }
         if (cRxedChar == 'f') // Captura dados do IMU e salva no arquivo se pressionar 'f'
         {
-            beep_curto(); // Emite um beep curto
+            beep_curto(); // Beep curto ao iniciar captura
             leds(1, 0, 0); // Vermelho: Captura em andamento
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Gravando...", 10, 2, cor);
             capture_imu_data_and_save();
             leds(0, 1, 0); // Verde: Pronto
             ssd1306_fill(&ssd, false);
-            beep_duplo(); // Emite um beep duplo
+            beep_duplo(); // Dois beeps curtos ao finalizar captura
             escrever(&ssd, "Dados Salvos!", 10, 2, cor);
             printf("\nEscolha o comando (h = help):  ");
         }

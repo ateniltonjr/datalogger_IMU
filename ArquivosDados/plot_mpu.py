@@ -4,7 +4,7 @@ import os
 
 # Caminho absoluto do arquivo de dados, relativo ao script
 script_dir = os.path.dirname(os.path.abspath(__file__))
-data_path = os.path.join(script_dir, 'dadosMPU1.csv')
+data_path = os.path.join(script_dir, 'dadosMPU2.csv')
 data = np.loadtxt(data_path, delimiter=',')
 
 amostra = data[:, 0]
