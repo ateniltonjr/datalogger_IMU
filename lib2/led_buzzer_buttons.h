@@ -68,4 +68,23 @@ void beep_duplo()
     tocar_nota(500, 80);
 }
 
+// Trecho para modo BOOTSEL com botão B
+#include "pico/bootrom.h"
+#define botaoA 5
+#define botaoB 6
+#define botaoJ 22
+
+void iniciar_botoes()
+{
+    gpio_init(botaoA);
+    gpio_set_dir(botaoA, GPIO_IN);
+    gpio_pull_up(botaoA);
+    gpio_init(botaoB);
+    gpio_set_dir(botaoB, GPIO_IN);
+    gpio_pull_up(botaoB);
+    gpio_init(botaoJ);
+    gpio_set_dir(botaoJ, GPIO_IN);
+    gpio_pull_up(botaoJ);
+}
+
 #endif

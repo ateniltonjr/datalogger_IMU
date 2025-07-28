@@ -485,25 +485,6 @@ static void process_stdio(int cRxedChar)
     }
 }
 
-// Trecho para modo BOOTSEL com botão B
-#include "pico/bootrom.h"
-#define botaoA 5
-#define botaoB 6
-#define botaoJ 22
-
-void iniciar_botoes()
-{
-    gpio_init(botaoA);
-    gpio_set_dir(botaoA, GPIO_IN);
-    gpio_pull_up(botaoA);
-    gpio_init(botaoB);
-    gpio_set_dir(botaoB, GPIO_IN);
-    gpio_pull_up(botaoB);
-    gpio_init(botaoJ);
-    gpio_set_dir(botaoJ, GPIO_IN);
-    gpio_pull_up(botaoJ);
-}
-
 #define debounce_delay 300
 volatile uint tempo_interrupcao = 0;
 
@@ -562,7 +543,7 @@ int main()
 {
     iniciar_buzzer(); // Inicializa o buzzer
     iniciar_leds(); // Inicializa LEDs
-    leds(1, 1, 0); // Amarelo: Inicializando
+    leds(1, 1, 0); // Amarelo: Inicializando (vermelho + verde)
     init_display(); // Inicializa o display
     iniciar_botoes(); // Inicializa os botões
     gpio_set_irq_enabled_with_callback(botaoA, GPIO_IRQ_EDGE_FALL, true, &gpio_irq_handler);
@@ -587,7 +568,7 @@ int main()
 
     iniciar_i2c_IMU();
 
-    leds(0, 1, 0); // Verde: Pronto para iniciar a captura
+    leds(0, 1, 0); // Verde: Sistema pronto
     ssd1306_fill(&ssd, false);
     escrever(&ssd, "Aguardando", 10, 2, cor);
     while (true)
@@ -599,11 +580,24 @@ int main()
 
         // Montagem do SD solicitada pelo botão B
         if (mount_request_flag) {
+            leds(1, 1, 0); // Amarelo: Montando cartão SD
             printf("\nMontando o SD (via flag)...\n");
             run_mount();
-            sd_montado = true;
-            ssd1306_fill(&ssd, false);
-            escrever(&ssd, "SD Montado", 10, 2, cor);
+            if (sd_get_by_num(0)->mounted) {
+                leds(0, 1, 0); // Verde: Pronto após montagem
+                ssd1306_fill(&ssd, false);
+                escrever(&ssd, "SD Montado", 10, 2, cor);
+            } else {
+                // Erro ao montar SD
+                for (int i = 0; i < 6; i++) {
+                    leds(1, 0, 1); // Roxo: Vermelho + Azul piscando
+                    sleep_ms(150);
+                    leds(0, 0, 0);
+                    sleep_ms(150);
+                }
+                ssd1306_fill(&ssd, false);
+                escrever(&ssd, "ERRO SD", 10, 2, cor);
+            }
             printf("\nEscolha o comando (h = help):  ");
             mount_request_flag = false;
         }
@@ -611,9 +605,11 @@ int main()
         // Captura de dados solicitada pelo botão A
         if (capture_request_flag) {
             captura_ativa = true;
+            leds(1, 0, 0); // Vermelho: Captura em andamento
             beep_curto(); // Beep curto ao iniciar captura (fora da interrupção)
             capture_imu_data_and_save();
             captura_ativa = false;
+            leds(0, 1, 0); // Verde: Pronto após captura
             beep_duplo(); // Dois beeps curtos ao finalizar captura (fora da interrupção)
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Captura OK", 10, 2, cor);
@@ -627,25 +623,43 @@ int main()
             escrever(&ssd, "Montando SD...", 10, 2, cor);
             printf("\nMontando o SD...\n");
             run_mount();
-            leds(0, 1, 0); // Verde: Pronto após montagem
-            ssd1306_fill(&ssd, false);
-            escrever(&ssd, "SD Montado", 10, 2, cor);
+            if (sd_get_by_num(0)->mounted) {
+                leds(0, 1, 0); // Verde: Pronto após montagem
+                ssd1306_fill(&ssd, false);
+                escrever(&ssd, "SD Montado", 10, 2, cor);
+            } else {
+                // Erro ao montar SD
+                for (int i = 0; i < 6; i++) {
+                    leds(1, 0, 1); // Roxo: Vermelho + Azul piscando
+                    sleep_ms(150);
+                    leds(0, 0, 0);
+                    sleep_ms(150);
+                }
+                ssd1306_fill(&ssd, false);
+                escrever(&ssd, "ERRO SD", 10, 2, cor);
+            }
             printf("\nEscolha o comando (h = help):  ");
         }
         if (cRxedChar == 'b') // Desmonta o SD card se pressionar 'b'
         {
+            leds(1, 1, 0); // Amarelo: Estado de espera após desmontar
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Desmontando SD...", 10, 2, cor);
             printf("\nDesmontando o SD. Aguarde...\n");
             run_unmount();
-            leds(1, 1, 0); // Amarelo: Estado de espera após desmontar
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "SD Desmontado", 10, 2, cor);
             printf("\nEscolha o comando (h = help):  ");
         }
         if (cRxedChar == 'c') // Lista diretórios e os arquivos se pressionar 'c'
         {
-            leds(0, 0, 1); // Azul: Acessando SD
+            // Azul piscando: Acessando SD
+            for (int i = 0; i < 4; i++) {
+                leds(0, 0, 1);
+                sleep_ms(120);
+                leds(0, 0, 0);
+                sleep_ms(120);
+            }
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Listando arquivos...", 10, 2, cor);
             printf("\nListando arquivos no cartão SD...\n");
@@ -658,7 +672,13 @@ int main()
         }
         if (cRxedChar == 'd') // Exibe o conteúdo do arquivo se pressionar 'd'
         {
-            leds(0, 0, 1); // Azul: Acessando SD
+            // Azul piscando: Acessando SD
+            for (int i = 0; i < 4; i++) {
+                leds(0, 0, 1);
+                sleep_ms(120);
+                leds(0, 0, 0);
+                sleep_ms(120);
+            }
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Lendo arquivo...", 10, 2, cor);
             read_file(nome_arquivo);
@@ -669,7 +689,13 @@ int main()
         }
         if (cRxedChar == 'e') // Obtém o espaço livre no SD card se pressionar 'e'
         {
-            leds(0, 0, 1); // Azul: Acessando SD
+            // Azul piscando: Acessando SD
+            for (int i = 0; i < 4; i++) {
+                leds(0, 0, 1);
+                sleep_ms(120);
+                leds(0, 0, 0);
+                sleep_ms(120);
+            }
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Espaco livre...", 10, 2, cor);
             printf("\nObtendo espaço livre no SD...\n\n");
@@ -695,7 +721,13 @@ int main()
         }
         if (cRxedChar == 'g') // Formata o SD card se pressionar 'g'
         {
-            leds(0, 0, 1); // Azul: Acessando SD
+            // Azul piscando: Acessando SD
+            for (int i = 0; i < 4; i++) {
+                leds(0, 0, 1);
+                sleep_ms(120);
+                leds(0, 0, 0);
+                sleep_ms(120);
+            }
             ssd1306_fill(&ssd, false);
             escrever(&ssd, "Formatando SD...", 10, 2, cor);
             printf("\nProcesso de formatação do SD iniciado. Aguarde...\n");
