@@ -67,10 +67,33 @@ void iniciar_i2c_IMU()
 int16_t acceleration[3], gyro[3];
 
 
-// Função utilitária para ler acelerômetro e giroscópio em arrays fornecidos
+
+// Função utilitária para ler acelerômetro e giroscópio em arrays fornecidos (valores brutos)
 static inline void ler_acc_giro(int16_t accel[3], int16_t gyro[3])
 {
     mpu6050_read_raw(accel, gyro);
+}
+
+// Conversão dos valores brutos para unidades físicas
+// Fatores padrão: acelerômetro ±2g (16384 LSB/g), giroscópio ±250°/s (131 LSB/(°/s))
+#define MPU6050_ACCEL_SENS_2G 16384.0f
+#define MPU6050_GYRO_SENS_250 131.0f
+#define GRAVIDADE 9.80665f
+
+// Converte valores brutos do acelerômetro para m/s^2
+static inline void accel_raw_to_ms2(const int16_t accel_raw[3], float accel_ms2[3])
+{
+    for (int i = 0; i < 3; i++) {
+        accel_ms2[i] = ((float)accel_raw[i] / MPU6050_ACCEL_SENS_2G) * GRAVIDADE;
+    }
+}
+
+// Converte valores brutos do giroscópio para °/s
+static inline void gyro_raw_to_dps(const int16_t gyro_raw[3], float gyro_dps[3])
+{
+    for (int i = 0; i < 3; i++) {
+        gyro_dps[i] = (float)gyro_raw[i] / MPU6050_GYRO_SENS_250;
+    }
 }
 
 void loop_leitura_IMU()

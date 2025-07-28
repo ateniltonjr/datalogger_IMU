@@ -15,41 +15,44 @@ giro_x = data[:, 4]
 giro_y = data[:, 5]
 giro_z = data[:, 6]
 
+# Cria vetor de tempo (10000 amostras, 0.1s entre cada)
+tempo = amostra * 0.1  # ou np.arange(len(amostra)) * 0.1
+
 fig, axs = plt.subplots(3, 2, figsize=(12, 8))
 
-axs[0, 0].plot(amostra, accel_x, 'b')
+axs[0, 0].plot(tempo, accel_x, 'b')
 axs[0, 0].set_title('Aceleração X')
-axs[0, 0].set_xlabel('Número da amostra')
+axs[0, 0].set_xlabel('Tempo (s)')
 axs[0, 0].set_ylabel('Accel X')
 axs[0, 0].grid()
 
-axs[1, 0].plot(amostra, accel_y, 'g')
+axs[1, 0].plot(tempo, accel_y, 'g')
 axs[1, 0].set_title('Aceleração Y')
-axs[1, 0].set_xlabel('Número da amostra')
+axs[1, 0].set_xlabel('Tempo (s)')
 axs[1, 0].set_ylabel('Accel Y')
 axs[1, 0].grid()
 
-axs[2, 0].plot(amostra, accel_z, 'r')
+axs[2, 0].plot(tempo, accel_z, 'r')
 axs[2, 0].set_title('Aceleração Z')
-axs[2, 0].set_xlabel('Número da amostra')
+axs[2, 0].set_xlabel('Tempo (s)')
 axs[2, 0].set_ylabel('Aceleração Z')
 axs[2, 0].grid()
 
-axs[0, 1].plot(amostra, giro_x, 'c')
+axs[0, 1].plot(tempo, giro_x, 'c')
 axs[0, 1].set_title('Giro X')
-axs[0, 1].set_xlabel('Número da amostra')
+axs[0, 1].set_xlabel('Tempo (s)')
 axs[0, 1].set_ylabel('Giro X')
 axs[0, 1].grid()
 
-axs[1, 1].plot(amostra, giro_y, 'm')
+axs[1, 1].plot(tempo, giro_y, 'm')
 axs[1, 1].set_title('Giro Y')
-axs[1, 1].set_xlabel('Número da amostra')
+axs[1, 1].set_xlabel('Tempo (s)')
 axs[1, 1].set_ylabel('Giro Y')
 axs[1, 1].grid()
 
-axs[2, 1].plot(amostra, giro_z, 'y')
+axs[2, 1].plot(tempo, giro_z, 'y')
 axs[2, 1].set_title('Giro Z')
-axs[2, 1].set_xlabel('Número da amostra')
+axs[2, 1].set_xlabel('Tempo (s)')
 axs[2, 1].set_ylabel('Giro Z')
 axs[2, 1].grid()
 

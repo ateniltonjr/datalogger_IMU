@@ -26,7 +26,7 @@ static const uint32_t period = 1000;
 static absolute_time_t next_log_time;
 
 static char nome_arquivo[32] = "coleta.csv";
-static char nome_arquivo_base[24] = "dadosMPU"; // Altere aqui o nome base desejado
+static char nome_arquivo_base[24] = "medicoes"; // Altere aqui o nome base desejado
 static int numero_coleta = 1;
 
 static sd_card_t *sd_get_by_name(const char *const name)
@@ -319,9 +319,11 @@ void capture_imu_data_and_save()
     const int intervalo_ms = 100;
     int tempo_total_s = (total_amostras * intervalo_ms) / 1000;
     printf("Tempo estimado: %d segundos\n", tempo_total_s);
-    escrever(&ssd, "Capturando dados...", 10, 2, cor);
-    escrever(&ssd, "Pressione A para parar", 10, 3, cor);
-    escrever
+    ssd1306_fill(&ssd, false);
+    escrever(&ssd, "tempo restante", 5, 5, cor);
+    char tempo_str[20];
+    snprintf(tempo_str, sizeof(tempo_str), "%d segundos", tempo_total_s);
+    escrever(&ssd, tempo_str, 5, 20, cor);
     // Gera nome do arquivo com base definida no código
     snprintf(nome_arquivo, sizeof(nome_arquivo), "%s%d.csv", nome_arquivo_base, numero_coleta);
     numero_coleta++;
@@ -347,13 +349,19 @@ void capture_imu_data_and_save()
             f_close(&file);
             return;
         }
-        // Exibe tempo restante a cada 50 amostras
+        // Exibe tempo restante a cada 50 amostras e atualiza display
         if ((i + 1) % 50 == 0 || i == 0) {
             absolute_time_t now = get_absolute_time();
             int elapsed_ms = to_ms_since_boot(now) - to_ms_since_boot(start_time);
             int remaining_ms = (total_amostras - (i + 1)) * intervalo_ms;
             int remaining_s = remaining_ms / 1000;
             printf("Amostra %d/%d - Tempo restante estimado: %d segundos\n", i + 1, total_amostras, remaining_s);
+            // Atualiza display
+            ssd1306_fill(&ssd, false);
+            escrever(&ssd, "tempo restante", 5, 5, cor);
+            char tempo_str[20];
+            snprintf(tempo_str, sizeof(tempo_str), "%d segundos", remaining_s);
+            escrever(&ssd, tempo_str, 5, 20, cor);
         }
         sleep_ms(intervalo_ms);
     }
