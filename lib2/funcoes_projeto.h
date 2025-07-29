@@ -29,16 +29,21 @@ void capture_imu_data_and_save()
 {
     printf("\nCapturando dados do acelerômetro e giroscópio. Aguarde a finalização...\n");
     
-    int tempo_total_s = ((total_amostras - 1) * intervalo_ms) / 1000;
+    int tempo_total_s = (total_amostras * intervalo_ms) / 1000;
     printf("Tempo estimado: %d segundos\n", tempo_total_s);
     ssd1306_fill(&ssd, false);
     escrever(&ssd, "tempo restante", 5, 5, cor);
     char tempo_str[20];
     snprintf(tempo_str, sizeof(tempo_str), "%d segundos", tempo_total_s);
     escrever(&ssd, tempo_str, 5, 20, cor);
-    // Gera nome do arquivo como arquivo1.csv, arquivo2.csv, etc.
+    // Gera nome do arquivo como tarefa1.csv, tarefa2.csv, etc.
+    char nome_base[32];
+    strncpy(nome_base, nome_arquivo, sizeof(nome_base));
+    nome_base[sizeof(nome_base)-1] = '\0';
+    char *ext = strstr(nome_base, ".csv");
+    if (ext) *ext = '\0';
     char nome_arquivo_incrementado[32];
-    snprintf(nome_arquivo_incrementado, sizeof(nome_arquivo_incrementado), "%s%d.csv", nome_arquivo, numero_coleta);
+    snprintf(nome_arquivo_incrementado, sizeof(nome_arquivo_incrementado), "%s%d.csv", nome_base, numero_coleta);
     numero_coleta++;
     FIL file;
     printf("Arquivo de saída: %s\n", nome_arquivo_incrementado);
@@ -94,11 +99,22 @@ void capture_imu_data_and_save()
 // Função para ler o conteúdo de um arquivo e exibir no terminal
 void read_file(const char *nome_arquivo)
 {
+    // Monta o nome do arquivo com índice mais recente
+    char nome_base[32];
+    strncpy(nome_base, nome_arquivo, sizeof(nome_base));
+    nome_base[sizeof(nome_base)-1] = '\0';
+    char *ext = strstr(nome_base, ".csv");
+    if (ext) *ext = '\0';
+    char nome_arquivo_ler[32];
+    snprintf(nome_arquivo_ler, sizeof(nome_arquivo_ler), "%s%d.csv", nome_base, numero_coleta-1);
     FIL file;
-    FRESULT res = f_open(&file, nome_arquivo, FA_READ);
+    FRESULT res = f_open(&file, nome_arquivo_ler, FA_READ);
     if (res != FR_OK)
     {
         printf("[ERRO] Não foi possível abrir o arquivo para leitura. Verifique se o cartão está montado ou se o arquivo existe.\n");
+        ssd1306_fill(&ssd, false);
+        escrever(&ssd, "ERRO leitura SD", 5, 5, cor);
+        escrever(&ssd, "Verifique o cartão!", 5, 20, cor);
         return;
     }
     char buffer[128];

@@ -1,4 +1,4 @@
 build
 !.vscode/*
-/vscode
+/.vscode
 pico_sdk_import.cmake
